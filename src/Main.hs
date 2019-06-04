@@ -1,5 +1,3 @@
-{-# LANGUAGE TupleSections #-}
-
 {-
     This file is part of Skef.
 
@@ -27,12 +25,12 @@ import Debug.Trace (trace)
 import Control.Monad (void)
 import Data.Void
 import Text.Megaparsec
-import Text.Megaparsec.Char
+import Text.Megaparsec.Char (digitChar)
 import qualified Text.Megaparsec.Char.Lexer as Lex
 
 import Types
 
-type Parser = Parsec Void String
+type Parser = Parsec Void Text.Text
 
 manySpaceNewline :: Parser ()
 manySpaceNewline = void $ takeWhileP Nothing f
@@ -63,11 +61,23 @@ guardEq pos = Lex.indentGuard (return ()) EQ pos
 pTextNode :: Pos -> Parser (Node)
 pTextNode parentPos = do
     t <- some line
-    return $ TextNode $ Text.pack $ unlines t
+    return $ TextNode $ Text.unlines t
   where
     line = do
         _ <- guardGt parentPos
         t <- takeWhileP Nothing (\x -> x /= '\n' && x /= '[')
+        someSpaceNewline
+        return t
+
+pCodeText :: Pos -> Parser (Text.Text)
+pCodeText parentPos = do
+    t <- some line
+    return $ Text.unlines t
+  where
+    line = do
+        _ <- guardGt parentPos
+        t <- takeWhileP Nothing (/= '\n')
+        -- TODO: preserve indentation inside code blocks
         someSpaceNewline
         return t
 
@@ -76,15 +86,20 @@ pLabel parentPos = do
     _ <- guardGt parentPos
     pos <- Lex.indentLevel
     _ <- single '['
-    t <- takeWhileP Nothing (\x -> x /= ']')
+    t <- takeWhile1P Nothing (/= ']')
     _ <- single ']'
     _ <- manySpaceNewline
-    children <- many (pLabel pos <|> pTextNode pos)
-    return $ Custom (Text.pack t) (Text.pack "") children
+    let labelName = Text.toLower $ Text.strip t
+    if labelName /= "code" then do
+        children <- many (pLabel pos <|> pTextNode pos)
+        return $ Custom t (Text.pack "") children
+    else do
+        child <- pCodeText parentPos
+        return $ Code child
 
 pDateLabel :: Parser Calendar.Day
 pDateLabel = do
-        _ <- takeWhileP Nothing (\x -> x /= '-')
+        _ <- takeWhileP Nothing (/= '-')
         _ <- single '-'
         _ <- manySpace
         year <- count 4 (digitChar <?> "year")
@@ -115,5 +130,5 @@ parser = many pDay <* eof
 main :: IO ()
 main = do
     input <- IO.readFile "tests/test.skef"
-    output <- parseTest parser input
+    output <- parseTest parser $ Text.pack input
     print output

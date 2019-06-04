@@ -37,6 +37,11 @@
         but the Getting Thing's Done philosphy says you shouldn't (which we
         don't care about of course, silly busy people).
 
+        [code]
+            I am a code block. All my labels are ignored.
+            [diggy diggy hole]
+            [todo ignore me]
+
 [Thu 29 Nov 2018 - 2018-11-29]
     [todo ugh]
 
