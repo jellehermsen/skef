@@ -13,7 +13,7 @@ cabal-version:       >=1.10
 
 executable skef
   main-is:             Main.hs
-  other-modules:       Types
+  other-modules:       Types, Parser
   default-extensions:  OverloadedStrings
   build-depends:       base >=4.9, text >= 1.2, time >= 1.9, megaparsec >= 7.0.4
   hs-source-dirs:      src
