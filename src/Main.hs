@@ -24,5 +24,5 @@ import Parser
 
 main :: IO ()
 main = do
-    input <- IO.readFile "/home/jelle/stack/journal.jel"
+    input <- IO.readFile "tests/test.skef"
     parse $ Text.pack input
