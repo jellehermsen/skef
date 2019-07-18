@@ -19,6 +19,7 @@ module Parser (Parser.parse) where
 
 import qualified Data.Time.Calendar as Calendar
 import qualified Data.Text as Text
+import Data.Either (isLeft, isRight, fromLeft, fromRight)
 import Debug.Trace (trace)
 import Control.Monad (void)
 import Data.Void
@@ -79,6 +80,27 @@ pCodeText parentPos = do
         someSpaceNewline
         return t
 
+
+{-
+data Node = Project Text.Text [Node] 
+    | Code Text.Text
+    | Todo Text.Text [Node]
+    | Done Text.Text [Node]
+    | Time Int Text.Text [Node]
+    | TextNode Text.Text
+    | Custom Text.Text Text.Text [Node]
+  deriving (Show)
+-}
+
+node :: Text.Text -> Text.Text -> [Node] -> Either Text.Text Node
+node "todo" descr children = Right $ Todo descr children
+node "done" descr children = Right $ Done descr children
+node "time" descr children = Right $ Time 0 timeSegment children
+    where
+        timeSegment = head $ Text.split (==' ') $ Text.strip descr
+
+node labelName descr children = Right $ Custom labelName descr children
+
 pLabel :: Pos -> Parser (Node)
 pLabel parentPos = do
     _ <- guardGt parentPos
@@ -87,10 +109,16 @@ pLabel parentPos = do
     t <- takeWhile1P Nothing (/= ']')
     _ <- single ']'
     _ <- manySpaceNewline
-    let labelName = Text.toLower $ Text.strip t
+    let (labelName, remainder) = Text.breakOn " " $ Text.toLower $ Text.strip t
     if labelName /= "code" then do
-        children <- many (pLabel pos <|> pTextNode pos)
-        return $ Custom t (Text.pack "") children
+        if labelName == "error" then fail "BOEMSHAKALAKA"
+        else do
+            children <- many (pLabel pos <|> pTextNode pos)
+            let n = node labelName (Text.strip remainder) children
+            if (isRight n) then
+                return $ fromRight n
+            else
+                fail $ fromLeft n
     else do
         child <- pCodeText parentPos
         return $ Code child

@@ -1,4 +1,6 @@
 [Fri Sep 02 2016 - 2016-09-02]
+    [time 8h dit is een testje jaaaaaaaaaaaaaaaa]\
+    [error gooi maar een error ja]
     This is a line of text that is just a general little untaxonomized line of
     text that will be filed under September 2nd.
 
@@ -6,7 +8,7 @@
         This text is filed under "project". I will be able to run queries that
         gather all my entries filed under this tag. 
         
-        [subproject]
+        [subproject dit is de rest yooo]
             You can even nest projects, nifty wifty.
 
         [todo mow the grass]
